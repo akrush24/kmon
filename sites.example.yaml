@@ -1,0 +1,10 @@
+---
+
+- name: "site1"
+  http: "https://site1.ru/"
+  status_code: 200
+  load_time: 0.5
+- name: "site2"
+  http: "http://site2.ru/"
+  status_code: 200
+  load_time: 0.1
