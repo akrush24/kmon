@@ -32,3 +32,8 @@ for site in sites:
         else:
             check = "load_time:ERROR"
         layout(res, check)
+    # checl ssl expiration
+    # TO DO
+
+    # check work in http res
+    # TO DO
