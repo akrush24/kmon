@@ -23,17 +23,17 @@ if not debug:
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 file = open(r'sites.yaml')
-sites = yaml.load(file, Loader=yaml.FullLoader)
+config = yaml.load(file, Loader=yaml.FullLoader)
 
 def layout(res, check):
     print(datetime.now(), site['http'], res.status_code, float(res.elapsed.total_seconds()), check)
 
-def action(action):
-    print("AXTUNG")
+def action(heandler, action):
+    if heandler == 'telegram':
+        requests.get('https://api.telegram.org/bot'+config['telegram']['ttoken']+'/sendMessage?chat_id='+config['telegram']['tuserid']+'&text='+action)
 
-now = datetime.now(pytz.utc)
 
-for site in sites:
+for site in config['checks']:
     res = requests.get(site['http'], headers=headers, timeout=timeout, verify=False, allow_redirects=False)
 
     # http code check #
@@ -42,8 +42,7 @@ for site in sites:
             check = "Status_code:OK"
         else:
             check = "Status_code:ERROR"
-            if 'search' in site.keys():
-                action(site['search'])
+            action('telegram', site['host']+", "+check)
         layout(res, check)
 
     # load time check #
@@ -52,8 +51,7 @@ for site in sites:
             check = "Load_time:OK"
         else:
             check = "Load_time:ERROR"
-            if 'search' in site.keys():
-                action(site['search'])
+            action('telegram', site['host']+", "+check)
         layout(res, check)
 
     # check context #
@@ -62,8 +60,7 @@ for site in sites:
             check = "Search:OK"
         else:
             check = "Search:ERROR"
-            if 'search' in site.keys():
-                action(site['search'])
+            action('telegram', site['host']+", "+check)
         layout(res, check)
 
     # checl ssl expiration @
@@ -78,14 +75,13 @@ for site in sites:
         ssl_check_date = datetime.now() + timedelta(days=site['min_ssl_expiry_days'])
         if ssl_check_date.replace(tzinfo=pytz.UTC) > notAfter.replace(tzinfo=pytz.UTC):
             check = "SSL EXPIRE ERROR"
+            action('telegram', site['host']+", "+check)
         else:
             check = "SSL EXPIRE:OK"
         layout(res, check)
         if subject != site['host']:
             check = "SSL SUBJECT:ERROR"
+            action('telegram', site['host']+", "+check)
         else:
             check = "SSL SUBJECT:OK"
         layout(res, check)
-
-    # check work in http res
-    # TO DO
