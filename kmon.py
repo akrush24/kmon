@@ -1,18 +1,10 @@
 #!/usr/bin/python3
 import requests, yaml
-
-from datetime import datetime, date, time, timedelta
-import ssl
-import OpenSSL
+from datetime import datetime, timedelta
 import pytz
 import socket
 import re
-from urllib.parse import urlparse
-import urllib.request, json
-import email.message
-import smtplib
-from urllib.request import Request, urlopen, ssl, socket
-from urllib.error import URLError, HTTPError
+import ssl
 
 debug = False
 headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0","Connection":"close","Accept-Language":"en-US,en;q=0.5","Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","Upgrade-Insecure-Requests":"1"}
@@ -22,7 +14,7 @@ if not debug:
     from requests.packages.urllib3.exceptions import InsecureRequestWarning
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-file = open(r'sites.yaml')
+file = open(r'config.yaml')
 config = yaml.load(file, Loader=yaml.FullLoader)
 
 def layout(res, check):
@@ -32,7 +24,7 @@ def action(heandler, action):
     if heandler == 'telegram':
         requests.get('https://api.telegram.org/bot'+config['telegram']['ttoken']+'/sendMessage?chat_id='+config['telegram']['tuserid']+'&text='+action)
 
-
+# = # = # = # = # = # = # = # = # 
 for site in config['checks']:
     res = requests.get(site['http'], headers=headers, timeout=timeout, verify=False, allow_redirects=False)
 
