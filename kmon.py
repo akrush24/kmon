@@ -31,18 +31,18 @@ for site in config['checks']:
     # http code check #
     if 'status_code' in site.keys():
         if str(res.status_code) == str(site['status_code']):
-            check = "Status_code:OK"
+            check = "Status_code:OK [{}]".format(res.status_code)
         else:
-            check = "Status_code:ERROR"
+            check = "Status_code:ERROR [{}]".format(res.status_code)
             action('telegram', site['host']+", "+check)
         layout(res, check)
 
     # load time check #
     if 'load_time' in site.keys():
         if float(res.elapsed.total_seconds()) < float(site['load_time']):
-            check = "Load_time:OK"
+            check = "Load_time:OK [{}]".format(str(res.elapsed.total_seconds()))
         else:
-            check = "Load_time:ERROR"
+            check = "Load_time:ERROR [{}]".format(str(res.elapsed.total_seconds()))
             action('telegram', site['host']+", "+check)
         layout(res, check)
 
@@ -65,15 +65,16 @@ for site in config['checks']:
                 subject = ssock.getpeercert()['subject'][0][0][1]
         
         ssl_check_date = datetime.now() + timedelta(days=site['min_ssl_expiry_days'])
+
         if ssl_check_date.replace(tzinfo=pytz.UTC) > notAfter.replace(tzinfo=pytz.UTC):
-            check = "SSL EXPIRE ERROR"
+            check = "SSL EXPIRE ERROR ["+notAfter+"]"
             action('telegram', site['host']+", "+check)
         else:
-            check = "SSL EXPIRE:OK"
+            check = "SSL EXPIRE:OK [{}]".format(notAfter)
         layout(res, check)
         if subject != site['host']:
             check = "SSL SUBJECT:ERROR"
             action('telegram', site['host']+", "+check)
         else:
-            check = "SSL SUBJECT:OK"
+            check = "SSL SUBJECT:OK [{}]".format(notAfter)
         layout(res, check)
