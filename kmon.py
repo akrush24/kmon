@@ -5,6 +5,7 @@ import pytz
 import socket
 import re
 import ssl
+import sys, os
 
 debug = False
 headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0","Connection":"close","Accept-Language":"en-US,en;q=0.5","Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","Upgrade-Insecure-Requests":"1"}
@@ -14,7 +15,7 @@ if not debug:
     from requests.packages.urllib3.exceptions import InsecureRequestWarning
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-file = open(r'config.yaml')
+file = open(r'{}/config.yaml'.format(os.path.abspath(os.path.dirname(sys.argv[0]))))
 config = yaml.load(file, Loader=yaml.FullLoader)
 
 def layout(res, check):
