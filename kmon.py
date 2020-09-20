@@ -36,6 +36,8 @@ for site in config['checks']:
         else:
             check = "Status_code:ERROR [{}]".format(res.status_code)
             action('telegram', site['host']+", "+check)
+        if res.status_code == 302:
+            print("{} Redireced to: {}".format(site['http'], res.headers['Location']))
         layout(res, check)
 
     # load time check #
