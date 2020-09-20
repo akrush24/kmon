@@ -1,12 +1,13 @@
 #!/usr/bin/python3
-import requests, yaml
-from datetime import datetime, timedelta
+import requests
+import yaml
 import pytz
 import socket
 import re
 import ssl
 import sys
 import os
+from datetime import datetime, timedelta
 
 debug = False
 headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0","Connection":"close","Accept-Language":"en-US,en;q=0.5","Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","Upgrade-Insecure-Requests":"1"}
@@ -20,15 +21,21 @@ file = open(r'{}/config.yaml'.format(os.path.abspath(os.path.dirname(sys.argv[0]
 config = yaml.load(file, Loader=yaml.FullLoader)
 
 def layout(res, check):
-    print(datetime.now(), site['url'], res.status_code, float(res.elapsed.total_seconds()), check)
+    print("[{}] {} {}".format(datetime.now(), site['name'], check))
 
 def action(heandler, action):
     if heandler == 'telegram':
         requests.get('https://api.telegram.org/bot'+config['telegram']['ttoken']+'/sendMessage?chat_id='+config['telegram']['tuserid']+'&text='+action)
 
+def check_ping(hostname):
+    response = os.system("ping -c 1 -w 2 {} 2>/dev/null 1>&2".format(hostname))
+    # and then check the response...
+    return response
+
 # = # = # = # = # = # = # = # = # 
 for site in config['checks']:
-    res = requests.get(site['url'], headers=headers, timeout=timeout, verify=False, allow_redirects=False)
+    if 'url' in site.keys():
+        res = requests.get(site['url'], headers=headers, timeout=timeout, verify=False, allow_redirects=False)
 
     # http code check #
     if 'status_code' in site.keys():
@@ -86,4 +93,12 @@ for site in config['checks']:
         except Exception as e:
             check = "SSL CHECK ERROR: {}".format(e)
 
-        layout(res, check)
+    if 'icmp' in site.keys():
+        if site['icmp']:
+            ping_status = check_ping(site['host'])
+            if ping_status == 0:
+                check = "ICMP:OK"
+            else:
+                check = "ICMP:ERROR [{}]".format(ping_status)
+                action('telegram', "{}, {}".format(site['host'],check))
+            layout(res, check)
