@@ -5,7 +5,8 @@ import pytz
 import socket
 import re
 import ssl
-import sys, os
+import sys
+import os
 
 debug = False
 headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0","Connection":"close","Accept-Language":"en-US,en;q=0.5","Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","Upgrade-Insecure-Requests":"1"}
@@ -19,7 +20,7 @@ file = open(r'{}/config.yaml'.format(os.path.abspath(os.path.dirname(sys.argv[0]
 config = yaml.load(file, Loader=yaml.FullLoader)
 
 def layout(res, check):
-    print(datetime.now(), site['http'], res.status_code, float(res.elapsed.total_seconds()), check)
+    print(datetime.now(), site['url'], res.status_code, float(res.elapsed.total_seconds()), check)
 
 def action(heandler, action):
     if heandler == 'telegram':
@@ -27,7 +28,7 @@ def action(heandler, action):
 
 # = # = # = # = # = # = # = # = # 
 for site in config['checks']:
-    res = requests.get(site['http'], headers=headers, timeout=timeout, verify=False, allow_redirects=False)
+    res = requests.get(site['url'], headers=headers, timeout=timeout, verify=False, allow_redirects=False)
 
     # http code check #
     if 'status_code' in site.keys():
@@ -35,9 +36,9 @@ for site in config['checks']:
             check = "Status_code:OK [{}]".format(res.status_code)
         else:
             check = "Status_code:ERROR [{}]".format(res.status_code)
-            action('telegram', site['host']+", "+check)
+            action('telegram', site['url']+", "+check)
         if res.status_code == 302:
-            print("{} Redireced to: {}".format(site['http'], res.headers['Location']))
+            print("{} Redireced to: {}".format(site['url'], res.headers['Location']))
         layout(res, check)
 
     # load time check #
@@ -55,29 +56,34 @@ for site in config['checks']:
             check = "Search:OK"
         else:
             check = "Search:ERROR"
-            action('telegram', site['host']+", "+check)
+            action('telegram', site['url']+", "+check)
         layout(res, check)
 
     # checl ssl expiration @
     if 'min_ssl_expiry_days' in site.keys():
         port = '443'
         context = ssl.create_default_context()
-        with socket.create_connection((site['host'], port)) as sock:
-            with context.wrap_socket(sock, server_hostname=site['host']) as ssock:
-                notAfter = datetime.strptime(ssock.getpeercert()['notAfter'], r"%b %d %H:%M:%S %Y %Z").replace(tzinfo=pytz.UTC)
-                subject = ssock.getpeercert()['subject'][0][0][1]
-        
-        ssl_check_date = datetime.now() + timedelta(days=site['min_ssl_expiry_days'])
+        try:
+            with socket.create_connection((site['host'], port)) as sock:
+                with context.wrap_socket(sock, server_hostname=site['host']) as ssock:
+                    notAfter = datetime.strptime(ssock.getpeercert()['notAfter'], r"%b %d %H:%M:%S %Y %Z").replace(tzinfo=pytz.UTC)
+                    subject = ssock.getpeercert()['subject'][0][0][1]
 
-        if ssl_check_date.replace(tzinfo=pytz.UTC) > notAfter.replace(tzinfo=pytz.UTC):
-            check = "SSL EXPIRE ERROR ["+notAfter+"]"
-            action('telegram', site['host']+", "+check)
-        else:
-            check = "SSL EXPIRE:OK [{}]".format(notAfter)
-        layout(res, check)
-        if subject != site['host']:
-            check = "SSL SUBJECT:ERROR"
-            action('telegram', site['host']+", "+check)
-        else:
-            check = "SSL SUBJECT:OK [{}]".format(notAfter)
+
+            ssl_check_date = datetime.now() + timedelta(days=site['min_ssl_expiry_days'])
+
+            if ssl_check_date.replace(tzinfo=pytz.UTC) > notAfter.replace(tzinfo=pytz.UTC):
+                check = "SSL EXPIRE ERROR ["+notAfter+"]"
+                action('telegram', site['host']+", "+check)
+            else:
+                check = "SSL EXPIRE:OK [{}]".format(notAfter)
+            layout(res, check)
+            if subject != site['host']:
+                check = "SSL SUBJECT:ERROR"
+                action('telegram', site['host']+", "+check)
+            else:
+                check = "SSL SUBJECT:OK [{}]".format(notAfter)
+        except Exception as e:
+            check = "SSL CHECK ERROR: {}".format(e)
+
         layout(res, check)

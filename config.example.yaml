@@ -2,19 +2,21 @@
 
 checks:
   - name: "site1"
-    http: "https://site1.ru/"
+    host: "site1.ru"
+    url: "https://site1.ru/"
     status_code: 200
-    load_time: 0.5
+    load_time: 2
     min_ssl_expiry_days: 30
     search: "searchword"
     action: "telegram"
+
   - name: "site2"
-    http: "http://site2.ru/"
+    url: "http://site2.ru/"
     status_code: 200
-    load_time: 0.1
+    load_time: 1
     search: "searchword"
     action: "telegram"
 
 telegram:
-  tuserid: "1234567890"
-  ttoken: '143453455332:AAFqKz4y5Vb4B8kA9WMKSrer8HCbrAe7rrDjwY'
+  tuserid: "TelegramUserId, use @myidbot"
+  ttoken: 'Toker for your Telegram Bot'
