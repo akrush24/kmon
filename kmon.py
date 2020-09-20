@@ -66,7 +66,7 @@ for site in config['checks']:
             action('telegram', site['url']+", "+check)
         layout(res, check)
 
-    # checl ssl expiration @
+    # checl ssl expiration #
     if 'min_ssl_expiry_days' in site.keys():
         port = '443'
         context = ssl.create_default_context()
@@ -93,6 +93,7 @@ for site in config['checks']:
         except Exception as e:
             check = "SSL CHECK ERROR: {}".format(e)
 
+    # ICMP (ping) server check #
     if 'icmp' in site.keys():
         if site['icmp']:
             ping_status = check_ping(site['host'])
