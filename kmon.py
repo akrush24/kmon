@@ -25,7 +25,7 @@ def layout(res, check):
 
 def action(heandler, action):
     if heandler == 'telegram':
-        requests.get('https://api.telegram.org/bot'+config['telegram']['ttoken']+'/sendMessage?chat_id='+config['telegram']['tuserid']+'&text='+action)
+        requests.get('https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}'.format(config['telegram']['ttoken'], config['telegram']['tuserid'], action))
 
 def check_ping(hostname):
     response = os.system("ping -c 1 -w 2 {} 2>/dev/null 1>&2".format(hostname))
@@ -75,10 +75,7 @@ for site in config['checks']:
                 with context.wrap_socket(sock, server_hostname=site['host']) as ssock:
                     notAfter = datetime.strptime(ssock.getpeercert()['notAfter'], r"%b %d %H:%M:%S %Y %Z").replace(tzinfo=pytz.UTC)
                     subject = ssock.getpeercert()['subject'][0][0][1]
-
-
             ssl_check_date = datetime.now() + timedelta(days=site['min_ssl_expiry_days'])
-
             if ssl_check_date.replace(tzinfo=pytz.UTC) > notAfter.replace(tzinfo=pytz.UTC):
                 check = "SSL EXPIRE ERROR ["+notAfter+"]"
                 action('telegram', site['host']+", "+check)

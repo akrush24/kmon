@@ -4,7 +4,7 @@ checks:
   - name: "site1"
     host: "site1.ru"
     url: "https://site1.ru/"
-    status_code: 200
+    status_code: 20
     load_time: 2
     min_ssl_expiry_days: 30
     search: "searchword"
