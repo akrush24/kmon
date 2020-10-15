@@ -9,6 +9,7 @@ import sys
 import os
 from datetime import datetime, timedelta
 
+
 debug = False
 headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0","Connection":"close","Accept-Language":"en-US,en;q=0.5","Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","Upgrade-Insecure-Requests":"1"}
 timeout = 15
@@ -20,8 +21,8 @@ if not debug:
 def layout(name, check):
     print("[{}] {} {}".format(datetime.now(), name, check))
 
-def action(heandler, action):
-    if heandler == 'telegram':
+def heandler(name, action):
+    if name == 'telegram':
         requests.get('https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}'.format(config['telegram']['ttoken'], config['telegram']['tuserid'], action))
 
 def check_ping(hostname):
@@ -44,7 +45,7 @@ def main():
                 check = "Status_code:OK [{}]".format(res.status_code)
             else:
                 check = "Status_code:ERROR [{}]".format(res.status_code)
-                action('telegram', site['url']+", "+check)
+                heandler('telegram', site['url']+", "+check)
             if res.status_code == 302:
                 print("{} Redireced to: {}".format(site['url'], res.headers['Location']))
             layout(site['name'], check)
@@ -55,7 +56,7 @@ def main():
                 check = "Load_time:OK [{}]".format(str(res.elapsed.total_seconds()))
             else:
                 check = "Load_time:ERROR [{}]".format(str(res.elapsed.total_seconds()))
-                action('telegram', site['host']+", "+check)
+                heandler('telegram', site['host']+", "+check)
             layout(site['name'], check)
 
         # check context #
@@ -64,7 +65,7 @@ def main():
                 check = "Search:OK"
             else:
                 check = "Search:ERROR"
-                action('telegram', site['url']+", "+check)
+                heandler('telegram', site['url']+", "+check)
             layout(site['name'], check)
 
         # checl ssl expiration #
@@ -82,14 +83,14 @@ def main():
                 ssl_check_date = datetime.now() + timedelta(days=site['min_ssl_expiry_days'])
                 if ssl_check_date.replace(tzinfo=pytz.UTC) > notAfter.replace(tzinfo=pytz.UTC):
                     check = "SSL EXPIRE ERROR ["+notAfter+"]"
-                    action('telegram', site['host']+", "+check)
+                    heandler('telegram', site['host']+", "+check)
                 else:
                     check = "SSL EXPIRE:OK [{}]".format(notAfter)
                     layout(site['name'], check)
                 
                 if subject != site['host']:
                     check = "SSL SUBJECT:ERROR"
-                    action('telegram', site['host']+", "+check)
+                    heandler('telegram', site['host']+", "+check)
                 else:
                     check = "SSL SUBJECT:OK [{}]".format(subject)
                     layout(site['name'], check)
@@ -106,7 +107,7 @@ def main():
                     check = "ICMP:OK"
                 else:
                     check = "ICMP:ERROR [{}]".format(ping_status)
-                    action('telegram', "{}, {}".format(site['host'],check))
+                    heandler('telegram', "{}, {}".format(site['host'],check))
                 layout(site['name'], check)
 
 
