@@ -102,11 +102,11 @@ def run(ctx, name):
             # check context #
             if 'search' in check.keys():
                 if re.search(check['search'], res.text):
-                    message = "Search:"
+                    message = "Search: [{}]".format(check['search'])
                     heandler('telegram', check['name']+", "+message, revert=check['revert'], success=True)
                     logger.info('{} {}'.format(check['name'], message))
                 else:
-                    message = "Search:"
+                    message = "Search: [{}]".format(check['search'])
                     heandler('telegram', check['name']+", "+message, revert=check['revert'], success=False)
                     logger.error('{} {}'.format(check['name'], message))
 
@@ -147,7 +147,7 @@ def run(ctx, name):
                 if check['icmp']:
                     ping_status = check_ping(check['host'])
                     if ping_status == 0:
-                        message = "ICMP:"
+                        message = "ICMP: [{}]".format(ping_status)
                         logger.info('{} {}'.format(check['name'], message))
                     else:
                         message = "ICMP: [{}]".format(ping_status)
