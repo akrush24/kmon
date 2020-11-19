@@ -1,3 +1,5 @@
 pyOpenSSL
 pytz
 pyyaml
+requests
+click
