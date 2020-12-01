@@ -148,7 +148,9 @@ def run(ctx, name):
                         heandler('telegram', '{}: {}'.format(check['name'], message), revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
                         logger.error('{} {}'.format(check['name'], message))
 
-
+            #ToDo Shell script run and check exit code
+            if 'shell' in check.keys():
+                print("#ToDo Shell script run and check exit code")
 
 if __name__ == "__main__":
     cli()
