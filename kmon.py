@@ -29,14 +29,9 @@ if not debug:
 
 
 def heandler(name, action, revert, success, telegram):
-    if (success == False and revert == False) or \
-        (success == True and revert == True):
+    if (success == False and revert == False) or (success == True and revert == True):
         if name == 'telegram':
-            requests.get(
-                            'https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}'.format(
-                                telegram['ttoken'], telegram['tuserid'], action
-                            )
-                        )
+            requests.get('https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}'.format(telegram['ttoken'], telegram['tuserid'], action))
 
 
 def check_ping(hostname):
@@ -83,11 +78,10 @@ def run(ctx, name):
                     logger.info('{} {}'.format(check['name'], message))
                 else:
                     message = "Status_code: [{}]".format(res.status_code)
-                    heandler('telegram', check['url']+", "+check['name'], revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
+                    heandler('telegram', message, revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
                     logger.error('{} {}'.format(check['name'], message))
                 if res.status_code == 302:
                     print("{} Redireced to: {}".format(check['url'], res.headers['Location']))
-                
 
             # load time check #
             if 'load_time' in check.keys():
@@ -96,18 +90,18 @@ def run(ctx, name):
                     logger.info('{} {}'.format(check['name'], message))
                 else:
                     message = "Load_time: [{}]".format(str(res.elapsed.total_seconds()))
-                    heandler('telegram', check['host']+", "+check['name'], revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
+                    heandler('telegram', '{}: {}'.format(check['name'], message), revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
                     logger.error('{} {}'.format(check['name'], message))
 
             # check context #
             if 'search' in check.keys():
                 if re.search(check['search'], res.text):
                     message = "Search: [{}]".format(check['search'])
-                    heandler('telegram', check['name']+", "+message, revert=check['revert'], success=True,  telegram=ctx.obj['config']['telegram'])
+                    heandler('telegram', '{}: {}'.format(check['name'], message), revert=check['revert'], success=True,  telegram=ctx.obj['config']['telegram'])
                     logger.info('{} {}'.format(check['name'], message))
                 else:
                     message = "Search: [{}]".format(check['search'])
-                    heandler('telegram', check['name']+", "+message, revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
+                    heandler('telegram', '{}: {}'.format(check['name'], message), revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
                     logger.error('{} {}'.format(check['name'], message))
 
             # checl ssl expiration #
@@ -121,23 +115,23 @@ def run(ctx, name):
                         with context.wrap_socket(sock, server_hostname=check['host']) as ssock:
                             notAfter = datetime.strptime(ssock.getpeercert()['notAfter'], r"%b %d %H:%M:%S %Y %Z").replace(tzinfo=pytz.UTC)
                             subject = ssock.getpeercert()['subject'][0][0][1]
-                    
+
                     ssl_check_date = datetime.now() + timedelta(days=check['min_ssl_expiry_days'])
                     if ssl_check_date.replace(tzinfo=pytz.UTC) > notAfter.replace(tzinfo=pytz.UTC):
                         message = "SSL EXPIRE  ["+notAfter+"]"
-                        heandler('telegram', check['host']+", "+message, revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
+                        heandler('telegram', '{}: {}'.format(check['name'], message), revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
                     else:
                         message = "SSL EXPIRE: [{}]".format(notAfter)
                         logger.info('{} {}'.format(check['name'], message))
-                    
+
                     if subject != check['host']:
                         message = "SSL SUBJECT:"
-                        heandler('telegram', check['host']+", "+message, revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
+                        heandler('telegram', '{}: {}'.format(check['name'], message), revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
                         logger.error('{} {}'.format(check['name'], message))
                     else:
                         message = "SSL SUBJECT: [{}]".format(subject)
                         logger.info('{} {}'.format(check['name'], message))
-                    
+
                 except Exception as e:
                     message = "SSL CHECK: {}".format(e)
                     logger.error('{} {}'.format(check['name'], message))
@@ -151,7 +145,7 @@ def run(ctx, name):
                         logger.info('{} {}'.format(check['name'], message))
                     else:
                         message = "ICMP: [{}]".format(ping_status)
-                        heandler('telegram', "{}, {}".format(check['host'], message), revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
+                        heandler('telegram', '{}: {}'.format(check['name'], message), revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
                         logger.error('{} {}'.format(check['name'], message))
 
 
