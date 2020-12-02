@@ -10,6 +10,7 @@ import os
 from datetime import datetime, timedelta
 import click
 import logging
+import subprocess
 
 # logger
 logger = logging.getLogger('kmon')
@@ -41,8 +42,7 @@ def check_ping(hostname):
 
 
 @click.group()
-@click.option('--config', '-c', envvar='CONFIGFILENAME', required=False, 
-                help="Config File Name", default="config.yaml")
+@click.option('--config', '-c', envvar='CONFIGFILENAME', required=False, help="Config File Name", default="config.yaml")
 @click.pass_context
 def cli(ctx, config):
     ctx.ensure_object(dict)
@@ -150,7 +150,28 @@ def run(ctx, name):
 
             #ToDo Shell script run and check exit code
             if 'shell' in check.keys():
-                print("#ToDo Shell script run and check exit code")
+
+                command_process = subprocess.Popen(
+                    "ssh -o StrictHostKeyChecking=no -o LogLevel=quiet {user}@{host} {cmd}".format(host=check['host'], cmd=check['shell']['cmd'], user=check['shell']['user']),
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                )
+
+                stderr=command_process.stderr.read().decode("utf-8") 
+                #stdout=command_process.stdout.read().decode("utf-8") 
+                command_output = command_process.communicate()[0]
+                exit_code = command_process.returncode
+ 
+                if exit_code > 0:
+                    message = "SHELL: $?:[{code}] CMD:[{cmd}] ERR:[{stderr}]".format(code=exit_code, stderr=stderr, cmd=check['shell']['cmd'])
+                    heandler('telegram', '{}: {}'.format(check['name'], message), revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
+                    logger.error('{} {}'.format(check['name'], message))
+                else:
+                    #message = "SHELL: EXIT_CODE [{code}] OUT:[{stdout}]".format(code=exit_code, stdout=stdout)
+                    message = "SHELL: $?:[{code}] CMD:[{cmd}]".format(code=exit_code, cmd=check['shell']['cmd'])
+                    logger.info('{} {}'.format(check['name'], message))
+
 
 if __name__ == "__main__":
     cli()
