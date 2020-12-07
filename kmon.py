@@ -164,12 +164,12 @@ def run(ctx, name):
                 exit_code = command_process.returncode
  
                 if exit_code > 0:
-                    message = "SHELL: $?:[{code}] CMD:[{cmd}] ERR:[{stderr}]".format(code=exit_code, stderr=stderr, cmd=check['shell']['cmd'])
+                    message = "SHELL: $?:[{code}] ERR:[{stderr}]".format(code=exit_code, stderr=stderr)
                     heandler('telegram', '{}: {}'.format(check['name'], message), revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
                     logger.error('{} {}'.format(check['name'], message))
                 else:
                     #message = "SHELL: EXIT_CODE [{code}] OUT:[{stdout}]".format(code=exit_code, stdout=stdout)
-                    message = "SHELL: $?:[{code}] CMD:[{cmd}]".format(code=exit_code, cmd=check['shell']['cmd'])
+                    message = "SHELL: $?:[{code}]".format(code=exit_code)
                     logger.info('{} {}'.format(check['name'], message))
 
 
