@@ -13,11 +13,12 @@
 * проверка сервера на icmp
   `checks.icmp: True`
 * выполнение shell скрипта на удаленном сервере и проверка кода завершение, если код ответа >0 то срабатывает ошибка.
-  ```checks.shell.host: "127.0.0.1"
+  ```
+  checks.shell.host: "127.0.0.1"
   checks.shell.cmd: "rm -rf /"
-  checks.shell.user: "root"```
+  checks.shell.user: "root"
+  ```
 * отправка сообщений, в случае ошибок, на телеграмм.
-
   ```
   telegram:
     tuserid: ""
