@@ -40,7 +40,12 @@ if not debug:
 def heandler(name, action, revert, success, telegram):
     if (success is False and revert is False) or (success is True and revert is True):
         if name == 'telegram':
-            requests.get('https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}'.format(telegram['ttoken'], telegram['tuserid'], action))
+            requests.get(
+                'https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}'.format(
+                    telegram['ttoken'],
+                    telegram['tuserid'],
+                    action)
+            )
 
 
 def check_ping(hostname):
@@ -50,7 +55,13 @@ def check_ping(hostname):
 
 
 def check_error(check, ctx, message):
-    heandler('telegram', '{}: {}'.format(check['name'], message), revert=check['revert'], success=False, telegram=ctx.obj['config']['telegram'])
+    heandler(
+        'telegram',
+        '{}: {}'.format(check['name'], message),
+        revert=check['revert'],
+        success=False,
+        telegram=ctx.obj['config']['telegram']
+    )
     logger.error('[{}] {}'.format(check['name'], message))
 
 
