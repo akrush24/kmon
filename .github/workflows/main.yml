@@ -23,9 +23,23 @@ jobs:
       - name: Checkout-out repo
         uses: actions/checkout@v2
 
-      - name: Run a one-line script
+      - name: Install requirements for test
         run: |
           ls -la
-          python --version
-          dpkg -l|grep python
+          python3 -m pip install flake8
 
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout-out repo
+        uses: actions/checkout@v2
+
+      - name: Install requirements for test
+        run: |
+          python3 -m pip install flake8
+
+      - name: Linter test
+        run: |
+          ls -la
+          flake8
