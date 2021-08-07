@@ -1,3 +1,5 @@
+![example workflow](https://github.com/akrush24/kmon/actions/workflows/main.yml/badge.svg)
+
 Система(скрипт) мониторинга, для личных нужд с минимальным набором, нужным мне, по функционалу.
 
 **Что имеется:**
