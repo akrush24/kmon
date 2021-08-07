@@ -26,10 +26,11 @@ jobs:
       - name: Install requirements for test
         run: |
           ls -la
-          python3 -m pip install flake8
+          python3 -m pip install  -r requirements.txt
 
   test:
     runs-on: ubuntu-latest
+    needs: [build]
 
     steps:
       - name: Checkout-out repo
@@ -41,5 +42,4 @@ jobs:
 
       - name: Linter test
         run: |
-          ls -la
-          flake8
+          flake8 .
