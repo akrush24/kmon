@@ -16,9 +16,8 @@ jobs:
       - name: Checkout-out repo
         uses: actions/checkout@v2
 
-      - name: Install requirements for test
+      - name: Install requirements
         run: |
-          ls -la
           python3 -m pip install -r ./requirements.txt
 
   test:
@@ -36,4 +35,3 @@ jobs:
       - name: Linter test
         run: |
           flake8 --ignore E501 .
-
