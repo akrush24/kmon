@@ -42,4 +42,4 @@ jobs:
 
       - name: Linter test
         run: |
-          flake8 .
+          flake8 --ignore E501 .
