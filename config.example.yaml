@@ -1,21 +1,13 @@
 ---
 
 checks:
-  - name: "site1"
-    host: "site1.ru"
-    url: "https://site1.ru/"
-    status_code: 20
+  - name: "ya.ru"
+    host: "ya.ru"
+    url: "https://ya.ru/"
+    status_code: 200
     load_time: 2
     min_ssl_expiry_days: 30
-    search: "searchword"
-    action: "telegram"
-
-  - name: "site2"
-    url: "http://site2.ru/"
-    status_code: 200
-    load_time: 1
-    search: "searchword"
-    action: "telegram"
+    search: "yandex"
 
 telegram:
   tuserid: "TelegramUserId, use @myidbot"

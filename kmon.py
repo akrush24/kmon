@@ -90,7 +90,6 @@ def run(ctx, name):
             try:
                 check['revert']
             except Exception as e:
-                logger.error("Exception: {}", e)
                 check['revert'] = False
 
             if 'url' in check.keys():
