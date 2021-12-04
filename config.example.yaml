@@ -9,6 +9,8 @@ checks:
     min_ssl_expiry_days: 30
     search: "searchword"
     action: "telegram"
+    min_ssl_expiry_days: 2
+    ssl_subject: "mainsite.ru"
 
   - name: "site2"
     url: "http://site2.ru/"
