@@ -7,6 +7,7 @@ checks:
     status_code: 200
     load_time: 2
     min_ssl_expiry_days: 30
+    ssl_subject: "yandex.ru"
     search: "yandex"
 
 telegram:
