@@ -22,8 +22,14 @@ logger.addHandler(logging_handler)
 
 
 debug = False
-headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0", "Connection": "close",
-           "Accept-Language": "en-US,en;q=0.5", "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "Upgrade-Insecure-Requests": "1"}
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0",  # noqa: E501
+    "Connection": "close",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",  # noqa: E501
+    "Upgrade-Insecure-Requests": "1"
+}
+
 timeout = 15
 
 if not debug:
@@ -34,8 +40,9 @@ if not debug:
 def heandler(name, action, revert, success, telegram):
     if (not success and not revert) or (success and revert):
         if name == 'telegram':
-            requests.get('https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}'.format(
-                telegram['ttoken'], telegram['tuserid'], action))
+            requests.get(
+                'https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}'.format(  # noqa: E501
+                    telegram['ttoken'], telegram['tuserid'], action))
 
 
 def check_ping(hostname):
@@ -178,7 +185,7 @@ def run(ctx, name):
 
                     ssl_check_date = datetime.now(
                     ) + timedelta(days=check['min_ssl_expiry_days'])
-                    if ssl_check_date.replace(tzinfo=pytz.UTC) > notAfter.replace(tzinfo=pytz.UTC):
+                    if ssl_check_date.replace(tzinfo=pytz.UTC) > notAfter.replace(tzinfo=pytz.UTC):  # noqa: E501
                         message = "SSL EXPIRE  [{}]".format(notAfter)
                         heandler('telegram', '{}: {}'.format(
                             check['name'], message),
@@ -260,5 +267,6 @@ def run(ctx, name):
                     check_error(check=check, ctx=ctx, message=message)
 
 
+# if script run from terminal, then:
 if __name__ == "__main__":
     cli()
