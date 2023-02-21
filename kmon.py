@@ -174,14 +174,22 @@ def run(ctx, name):
                         logger.info('[{}] {}'.format(check['name'], message))
                     else:
                         message = "ICMP: [{}]".format(ping_status)
-                        heandler('telegram', '{}: {}'.format(check['name'], message), revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
+                        heandler('telegram', '{}: {}'.format(
+                            check['name'],
+                            message),
+                            revert=check['revert'],
+                            success=False,
+                            telegram=ctx.obj['config']['telegram'])
                         logger.error('[{}] {}'.format(check['name'], message))
 
-            #ToDo Shell script run and check exit code
+            # ToDo Shell script run and check exit code
             if 'shell' in check.keys():
                 try:
                     command_process = subprocess.Popen(
-                        "ssh -o StrictHostKeyChecking=no -o LogLevel=quiet {user}@{host} {cmd}".format(host=check['host'], cmd=check['shell']['cmd'], user=check['shell']['user']),
+                        "ssh -o StrictHostKeyChecking=no -o LogLevel=quiet {user}@{host} {cmd}".format(  # noqa: E501
+                            host=check['host'],
+                            cmd=check['shell']['cmd'],
+                            user=check['shell']['user']),
                         shell=True,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE
@@ -192,8 +200,12 @@ def run(ctx, name):
                     exit_code = command_process.returncode
 
                     if exit_code > 0:
-                        message = "SHELL: $?:[{code}] ERR:[{stderr}]".format(code=exit_code, stderr=stderr)
-                        heandler('telegram', '{}: {}'.format(check['name'], message), revert=check['revert'], success=False,  telegram=ctx.obj['config']['telegram'])
+                        message = "SHELL: $?:[{code}] ERR:[{stderr}]".format(
+                            code=exit_code, stderr=stderr)
+                        heandler('telegram', '{}: {}'.format(
+                            check['name'], message), revert=check['revert'],
+                            success=False,
+                            telegram=ctx.obj['config']['telegram'])
                         logger.error('{} {}'.format(check['name'], message))
                     else:
                         message = "SHELL: $?:[{code}]".format(code=exit_code)
