@@ -7,10 +7,11 @@ import re
 import ssl
 import sys
 import os
-from datetime import datetime, timedelta
 import click
 import logging
 import subprocess
+import ping3
+from datetime import datetime, timedelta
 
 # logger
 logger = logging.getLogger('kmon')
@@ -39,14 +40,25 @@ if not debug:
 
 def heandler(name, action, revert, success, telegram):
     if (not success and not revert) or (success and revert):
-        if name == 'telegram':
-            requests.get(
-                'https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}'.format(  # noqa: E501
-                    telegram['ttoken'], telegram['tuserid'], action))
-
+        try:
+            ttoken = telegram['ttoken']
+        except:
+            ttoken = None
+        try:
+            tuserid = telegram['tuserid']
+        except:
+            tuserid = None
+        if name == 'telegram' and ttoken is not None and tuserid is not None:
+            try:
+                requests.get(
+                    'https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}'.format(  # noqa: E501
+                        ttoken, tuserid, action))
+            except:
+                logger.error('Telegramm API connection ERROR')
 
 def check_ping(hostname):
-    response = os.system("ping -c 1 -w 2 {} 2>/dev/null 1>&2".format(hostname))
+    timeout = 2
+    response = ping3.ping(hostname, timeout=2)
     # and then check the response...
     return response
 
@@ -61,23 +73,30 @@ def check_error(check, ctx, message):
 
 
 @click.group()
-@click.option('--config', '-c', envvar='CONFIGFILENAME',
-              required=False,
-              help="Config File Name",
-              default="config.yaml")
+@click.option(
+    '--config',
+    '-c',
+    envvar='CONFIGFILENAME',
+    required=False,
+    help="Config File Name",
+    default="config.yaml")
 @click.pass_context
 def cli(ctx, config):
     ctx.ensure_object(dict)
-    file = open(
-        r'{}/{}'.format(os.path.abspath(os.path.dirname(sys.argv[0])), config))
+    file = open(r'{}/{}'.format(
+            os.path.abspath(os.path.dirname(sys.argv[0])), config
+        ))
     ctx.obj['config'] = yaml.load(file, Loader=yaml.FullLoader)
+    try:
+        if ctx.obj['config']['telegram']: pass
+    except:
+        ctx.obj['config']['telegram'] = {}
 
 
 @click.option('--name', '-n', required=False, multiple=True, help="check name")
 @cli.command()
 @click.pass_context
 def run(ctx, name):
-
     # проходимся по всем проверкам
     for check in ctx.obj['config']['checks']:
         res = None
@@ -103,24 +122,26 @@ def run(ctx, name):
                         verify=False,
                         allow_redirects=False)
                 except Exception as e:
-                    message = "url: {}".format(e)
+                    message = "[URL Check][500]: [{}]".format(e)
                     check_error(check=check, ctx=ctx, message=message)
 
             # http code check #
-            if 'status_code' in check.keys():
+            if 'status_code' in check.keys() and res:
                 try:
                     if str(res.status_code) == str(check['status_code']):
-                        message = "Status_code: [{}]".format(res.status_code)
-                        logger.info('[{}] {}'.format(check['name'], message))
+                        message = "[{}] Status_code: [{}]".format(
+                            check['name'],
+                            res.status_code)
+                        logger.info(message)
                     else:
-                        message = "Status_code: [{}]".format(res.status_code)
+                        message = "[{}] : status_code : [{}]".format(check['name'], res.status_code)
                         heandler(
                             'telegram',
                             message,
                             revert=check['revert'],
                             success=False,
                             telegram=ctx.obj['config']['telegram'])
-                        logger.error('[{}] {}'.format(check['name'], message))
+                        logger.error(message)
                     if res.status_code == 302:
                         print("{} Redireced to: {}".format(
                             check['url'], res.headers['Location']))
@@ -131,13 +152,11 @@ def run(ctx, name):
             # load time check #
             if 'load_time' in check.keys():
                 try:
+                    message = "Load_time: [{}]".format(
+                        str(round(res.elapsed.total_seconds(), 3)))
                     if float(res.elapsed.total_seconds()) < float(check['load_time']):
-                        message = "Load_time: [{}]".format(
-                            str(res.elapsed.total_seconds()))
                         logger.info('[{}] {}'.format(check['name'], message))
                     else:
-                        message = "Load_time: [{}]".format(
-                            str(res.elapsed.total_seconds()))
                         heandler('telegram', '{}: {}'.format(
                             check['name'], message),
                             revert=check['revert'],
@@ -145,28 +164,27 @@ def run(ctx, name):
                             telegram=ctx.obj['config']['telegram'])
                         logger.error('[{}] {}'.format(check['name'], message))
                 except Exception as e:
-                    message = "load_time: {}".format(e)
+                    message = "[load_time][500]: {}".format(e)
                     check_error(check=check, ctx=ctx, message=message)
 
             # check context #
             if 'search' in check.keys():
                 try:
+                    message = "[Search text][]: [{}]".format(check['search'])
                     if re.search(check['search'], res.text):
-                        message = "Search: [{}]".format(check['search'])
                         heandler('telegram', '{}: {}'.format(
                             check['name'], message), revert=check['revert'],
                             success=True,
                             telegram=ctx.obj['config']['telegram'])
                         logger.info('[{}] {}'.format(check['name'], message))
                     else:
-                        message = "Search: [{}]".format(check['search'])
                         heandler('telegram', '{}: {}'.format(
                             check['name'], message), revert=check['revert'],
                             success=False,
                             telegram=ctx.obj['config']['telegram'])
                         logger.error('[{}] {}'.format(check['name'], message))
                 except Exception as e:
-                    message = "search: {}".format(e)
+                    message = "[Search text][500]: [{}]".format(e)
                     check_error(check=check, ctx=ctx, message=message)
 
             # checl ssl expiration #
@@ -183,8 +201,7 @@ def run(ctx, name):
                             )['notAfter'], r"%b %d %H:%M:%S %Y %Z").replace(tzinfo=pytz.UTC)
                             subject = ssock.getpeercert()['subject'][0][0][1]
 
-                    ssl_check_date = datetime.now(
-                    ) + timedelta(days=check['min_ssl_expiry_days'])
+                    ssl_check_date = datetime.now() + timedelta(days=check['min_ssl_expiry_days'])
                     if ssl_check_date.replace(tzinfo=pytz.UTC) > notAfter.replace(tzinfo=pytz.UTC):  # noqa: E501
                         message = "SSL EXPIRE  [{}]".format(notAfter)
                         heandler('telegram', '{}: {}'.format(
@@ -220,19 +237,27 @@ def run(ctx, name):
             # ICMP (ping) server check #
             if 'icmp' in check.keys():
                 if check['icmp']:
-                    ping_status = check_ping(check['host'])
-                    if ping_status == 0:
-                        message = "ICMP: [{}]".format(ping_status)
-                        logger.info('[{}] {}'.format(check['name'], message))
-                    else:
-                        message = "ICMP: [{}]".format(ping_status)
-                        heandler('telegram', '{}: {}'.format(
-                            check['name'],
-                            message),
-                            revert=check['revert'],
-                            success=False,
-                            telegram=ctx.obj['config']['telegram'])
-                        logger.error('[{}] {}'.format(check['name'], message))
+                    try:
+                        ping_status = check_ping(check['icmp'])
+                        if isinstance(ping_status, float):
+                            message = "[ICMP]: [{}]".format(
+                                round(ping_status, 3))
+                            logger.info('[{}] {}'.format(
+                                check['name'], message))
+                        else:
+                            message = "[ICMP]: [{}]".format(ping_status)
+                            heandler('telegram', '{}: {}'.format(
+                                check['name'],
+                                message),
+                                revert=check['revert'],
+                                success=False,
+                                telegram=ctx.obj['config']['telegram'])
+                            logger.error('[{}] {}'.format(
+                                check['name'], message))
+                    except Exception as e:
+                        message = "[ICMP][500]: [{}]".format(e)
+                        logger.error('[{}] {}'.format(
+                            check['name'], message))
 
             # ToDo Shell script run and check exit code
             if 'shell' in check.keys():
@@ -252,7 +277,7 @@ def run(ctx, name):
                     exit_code = command_process.returncode
 
                     if exit_code > 0:
-                        message = "SHELL: $?:[{code}] ERR:[{stderr}]".format(
+                        message = "[SHELL]: $?:[{code}] ERR:[{stderr}]".format(
                             code=exit_code, stderr=stderr)
                         heandler('telegram', '{}: {}'.format(
                             check['name'], message), revert=check['revert'],
@@ -260,10 +285,10 @@ def run(ctx, name):
                             telegram=ctx.obj['config']['telegram'])
                         logger.error('{} {}'.format(check['name'], message))
                     else:
-                        message = "SHELL: $?:[{code}]".format(code=exit_code)
+                        message = "[SHELL]: $?:[{code}]".format(code=exit_code)
                         logger.info('{} {}'.format(check['name'], message))
                 except Exception as e:
-                    message = "SHELL: {}".format(e)
+                    message = "[SHELL]: [{}]".format(e)
                     check_error(check=check, ctx=ctx, message=message)
 
 
